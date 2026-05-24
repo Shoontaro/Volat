@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Volat.Data;
+
 
 namespace Volat
 {
@@ -20,8 +22,27 @@ namespace Volat
     		builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
+            builder.Services.AddSingleton<DBService>();
+            builder.Services.AddScoped<DataRepository>();
 
-            return builder.Build();
+            var app = builder.Build();
+
+            InitializeDatabase(app.Services)
+                .GetAwaiter()
+                .GetResult();
+
+            return app;
+        }
+
+        private static async Task InitializeDatabase(
+        IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+
+            var database = scope.ServiceProvider
+                .GetRequiredService<DBService>();
+
+            await database.InitializeAsync();
         }
     }
 }
